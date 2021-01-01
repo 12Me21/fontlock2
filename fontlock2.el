@@ -108,15 +108,26 @@
         (,(concat "\\b" "\\(?1:[a-zA-Z0-9_]+\\)" terminfo-value-regexp)
          (1 'font-lock-variable-name-face)
          (4 'font-lock-string-face nil t)
-         (5 'terminfo-string-face nil t))
+         (5 'terminfo-string-face nil t)
+         (t 5 (
+                ("\\(%\\)" (1 'terminfo-escape-percent nil t))
+                 ))
+         )
         ("." (0 'error))
         ))
 
+(defmacro save-buffer-state (&rest body)
+  "Bind variables according to VARLIST and eval BODY restoring buffer state."
+  (declare (indent 0) (debug t))
+  `(let ((inhibit-point-motion-hooks t))
+     (with-silent-modifications
+       ,@body)))
 
 (defun terminfo-fontify-region (beg end loudly)
   "Fontify the text between BEG and END.
 If LOUDLY is non-nil, print status messages while fontifying.
 This function is the default `font-lock-fontify-region-function'."
+  
   (save-buffer-state
    ;; Use the fontification syntax table, if any.
    (with-syntax-table (or font-lock-syntax-table (syntax-table))
@@ -141,6 +152,8 @@ This function is the default `font-lock-fontify-region-function'."
      `(jit-lock-bounds ,beg . ,end))))
 
 (defun fontlock2-fontify-region (start end keywords)
+  "heck"
+  (message "%s\n" keywords)
   (goto-char start)
   (while (and (< (point) end))
     (let ((matchers keywords))
@@ -148,10 +161,17 @@ This function is the default `font-lock-fontify-region-function'."
         (when (looking-at (caar matchers))
           (setq highlights (cdr (car matchers)))
           (while highlights
-            (if (numberp (car (car highlights)))
-                (if (stringp (cdr (car highlights)))
-                    ()
-                  (font-lock-apply-highlight (car highlights))))
+            (setq highlight (car highlights))
+            (if (numberp (car highlight))
+              (font-lock-apply-highlight highlight)
+              (setq extra (nth 3 highlights)))
+            (when (eq (car highlight) t)
+              (setq m (car (cdr highlight)))
+              (when (match-beginning m)
+                (setq pt (point))
+                (fontlock2-fontify-region (match-beginning m) (match-end m) (car (cdr (cdr highlight))))
+                (goto-char pt))
+              )
             (setq highlights (cdr highlights)))
           (setq matchers nil)
           (goto-char (- (match-end 0) 1)))
@@ -160,17 +180,16 @@ This function is the default `font-lock-fontify-region-function'."
 
 (defun terminfo-fontify-region2 (start end &optional loudly)
   "eee"
-  (message "%s" "HUH?")
   (unless (eq (car font-lock-keywords) t)
     (setq font-lock-keywords
           (font-lock-compile-keywords font-lock-keywords)))
-  (fontlock2-fontify-region (start end (cddr font-lock-keywords))))
+  (fontlock2-fontify-region start end (cddr font-lock-keywords)))
 
 (define-derived-mode terminfo-mode fundamental-mode "terminfo"
   "mode for highlighting terminfo files"
   (setq font-lock-defaults
         '((terminfo-highlights)
           nil nil nil nil
-          '(font-lock-fontify-region-function . terminfo-fontify-region))))
+          (font-lock-fontify-region-function . terminfo-fontify-region))))
 
 (add-to-list 'auto-mode-alist '("\\.term\\'" . terminfo-mode))
