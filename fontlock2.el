@@ -112,6 +112,7 @@
         ("." (0 'error))
         ))
 
+
 (defun terminfo-fontify-region (beg end loudly)
   "Fontify the text between BEG and END.
 If LOUDLY is non-nil, print status messages while fontifying.
@@ -136,35 +137,40 @@ This function is the default `font-lock-fontify-region-function'."
        (setq beg font-lock-beg end font-lock-end))
      ;; Now do the fontification.
      (font-lock-unfontify-region beg end)
-     (terminfo-fontify-region beg end loudly)
+     (terminfo-fontify-region2 beg end loudly)
      `(jit-lock-bounds ,beg . ,end))))
 
-(defun terminfo-fontify-region (start end &optional loudly)
-  "eee"
-  (unless (eq (car font-lock-keywords) t)
-    (setq font-lock-keywords
-     (font-lock-compile-keywords font-lock-keywords)))
+(defun fontlock2-fontify-region (start end keywords)
   (goto-char start)
   (while (and (< (point) end))
-    (let ((matchers (cddr font-lock-keywords)))
+    (let ((matchers keywords))
       (while matchers
         (when (looking-at (caar matchers))
           (setq highlights (cdr (car matchers)))
           (while highlights
             (if (numberp (car (car highlights)))
-                (font-lock-apply-highlight (car highlights)))
+                (if (stringp (cdr (car highlights)))
+                    ()
+                  (font-lock-apply-highlight (car highlights))))
             (setq highlights (cdr highlights)))
           (setq matchers nil)
           (goto-char (- (match-end 0) 1)))
         (setq matchers (cdr matchers))))
     (goto-char (1+ (point)))))
-    
+
+(defun terminfo-fontify-region2 (start end &optional loudly)
+  "eee"
+  (message "%s" "HUH?")
+  (unless (eq (car font-lock-keywords) t)
+    (setq font-lock-keywords
+          (font-lock-compile-keywords font-lock-keywords)))
+  (fontlock2-fontify-region (start end (cddr font-lock-keywords))))
 
 (define-derived-mode terminfo-mode fundamental-mode "terminfo"
   "mode for highlighting terminfo files"
   (setq font-lock-defaults
         '((terminfo-highlights)
           nil nil nil nil
-          (font-lock-fontify-region-function . terminfo-fontify-region))))
+          '(font-lock-fontify-region-function . terminfo-fontify-region))))
 
 (add-to-list 'auto-mode-alist '("\\.term\\'" . terminfo-mode))
