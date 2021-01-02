@@ -54,23 +54,32 @@
     )
    ( ;state 10 (trans. start of line)
     ("\\\\\n" 10) ; escaped newline
-    ("[\t ]*\\([^:\n\\/]\\|\\\\\\([0-7][0-7][0-7]\\|[\tn \\]\\)\\|\\\\\n\\)+" 10 font-lock-variable-name-face) ; normal
-    (":[\t ]*" 11)
+    ("[\t ]*\\(?:~?\\(?:Ctrl\\|Alt\\|Shift\\)[\t ]*\\)* <Key>\\([^\n:]+\\):" 11 font-lock-builtin-face font-lock-variable-name-face) ;key seq
     ("/\\*\\(a\\|[^a]\\)*?\\*/" 10 font-lock-comment-face) ;/* c comment */
     ("/" 10 font-lock-variable-name-face)
     )
    ( ; state 11 (after colon)
-    ("\\([^\n\\]\\|\\\\\\([0-7][0-7][0-7]\\|[\t \\]\\)\\|\\\\\n\\)*" 9 font-lock-string-face)
+    ("[a-zA-Z0-9_-]+" 12 font-lock-function-name-face) ;action name (technl. can be 0 chars but ehhhh)
+    ("\\([ \t]\\|\\\\[t ]\\)+" 11)
     ("\\\\n" 10 font-lock-constant-face) ;backslash n
+    )
+   ( ;state 12 (after action name)
+    ;; todo: escapes in here
+    ("([ \t]*\\([^\n)\"]*?\\|\".*?\"\\)[ \t]*)" 11 nil font-lock-string-face)
     )
    ))
 
+;;modifiers: Ctrl Alt Shift (and ~Ctrl etc.)
+;; keys: \<Key\><whitespace><name><whitespace> (must be last item)
+;; apparently there are other event types than Key (also yes all this is case sensitive)
+;; then : or , (what does comma do? seems to allow another key combo but idk when it's used...)
 (define-derived-mode xresources-mode fundamental-mode "xresources"
   "mode for x resources files"
   (setq font-lock-defaults
         `((nil)
           nil nil nil nil
           (font-lock-fontify-region-function . fl2-fontify-region)
+          (font-lock-extra-managed-props . ,(list 'fl2-state)) ;;;sorrry
           (fl2-syntax . ,xresources-syntax))))
 
 (add-to-list 'auto-mode-alist '("\\.ad\\'" . xresources-mode))

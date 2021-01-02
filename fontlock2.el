@@ -10,18 +10,18 @@
 If LOUDLY is non-nil, print status messages while fontifying.
 This function is the default `font-lock-fontify-region-function'."
   (save-buffer-state
-   ;; Use the fontification syntax table, if any.
-    (fl2-fontify beg end fl2-syntax)
-    `(jit-lock-bounds ,beg . ,end)))
+    (fl2-fontify beg end fl2-syntax))
+    `(jit-lock-bounds ,beg . ,end));)
 
 (defun fl2-fontify (start end syntax)
+  ;(message "run %s - %s" start end)
   (setq case-fold-search nil)
   ;; todo: if we hit this limit, we should try to minimize the chance of failure
   ;; by searching for a linebreak (maybe make this configureable?)
-  (setq start (previous-char-property-change start (- start 100000)))
+  (setq start (previous-single-char-property-change start 'fl2-state nil (max (point-min) (- start 100000))))
   
-  (setq state (or (get-text-property start 'state) 0))
-  (remove-text-properties start end '(state nil 'face nil))
+  (setq state (or (get-text-property start 'fl2-state) 0))
+  (remove-text-properties start end '('fl2-state nil 'face nil))
   (goto-char start)
   ;; iterate over characters
   (while (< (point) end)
@@ -38,14 +38,18 @@ This function is the default `font-lock-fontify-region-function'."
               (setq face (funcall face (match-string 0))))
           (add-text-properties
            (match-beginning 0) (match-end 0)
-           (list 'state state 'face (or face 'default)))
+           (list 'fl2-state state 'face (or face 'default)))
+          (if (setq face (cadddr rule))
+              (add-text-properties
+               (match-beginning 1) (match-end 1)
+               (list 'face (or face 'default))))
           (goto-char (match-end 0))
           (setq state (cadr rule))
           (throw 'found nil)))
       ;; not found (syntax error)
       (add-text-properties
            pos (1+ pos)
-           (list 'state -1 'face 'font-lock-warning-face))
+           (list 'fl2-state -1 'face 'font-lock-warning-face))
       (setq state 0)
       (goto-char (1+ pos))
       ;;(goto-char (1+ (point)))
@@ -63,5 +67,12 @@ This function is the default `font-lock-fontify-region-function'."
 ;; 2: set parser initial state to this face
 ;; 3: parse until end of region
 ;; 4: if parser exit state does not match the face at the end of the region[where?], then invalidate the data after the region, after a timeout
+
+;;(defun fl2-next-error ()
+;; todo: write function that scans for next error token
+;; maybe you can give out debug info too?
+;; like, we have regexes for what to expect?
+;; or maybe hand write a description of the syntax?
+;; mmmm
 
 (provide 'fl2)

@@ -143,7 +143,7 @@
     ("=" 7)
     )
    ( ;state 7
-    ("[\\-a-zA-Z0-9\\+\\._]+" 5 font-lock-type-face)
+    ("[a-zA-Z0-9+._-]+" 5 font-lock-type-face)
     )
    ( ;state 8
     ("|" 9)
