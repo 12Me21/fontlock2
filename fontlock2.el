@@ -15,7 +15,11 @@ This function is the default `font-lock-fontify-region-function'."
     `(jit-lock-bounds ,beg . ,end)))
 
 (defun fl2-fontify (start end syntax)
+  (setq case-fold-search nil)
+  ;; todo: if we hit this limit, we should try to minimize the chance of failure
+  ;; by searching for a linebreak (maybe make this configureable?)
   (setq start (previous-char-property-change start (- start 100000)))
+  
   (setq state (or (get-text-property start 'state) 0))
   (remove-text-properties start end '(state nil 'face nil))
   (goto-char start)
