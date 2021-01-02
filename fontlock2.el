@@ -1,4 +1,4 @@
-                                        ;(defface terminfo-escape-percent
+;(defface terminfo-escape-percent
                                         ;  '((t . (:foreground "#808080")))
                                         ;  "face for terminfo escape sequences")
 
@@ -110,7 +110,7 @@
          (4 'font-lock-string-face nil t)
          (5 'terminfo-string-face nil t)
          (t 5 (
-                ("\\(%\\)" (1 'terminfo-escape-percent nil t))
+                ("\\(%\\)" (1 'terminfo-escape-percent t t))
                  ))
          )
         ("." (0 'error))
@@ -148,8 +148,11 @@ This function is the default `font-lock-fontify-region-function'."
        (setq beg font-lock-beg end font-lock-end))
      ;; Now do the fontification.
      (font-lock-unfontify-region beg end)
-     (terminfo-fontify-region2 beg end loudly)
+     ;;(terminfo-fontify-region2 beg end loudly)
+     (fl2-fontify-region beg end fl2-syntax-terminfo 0)
      `(jit-lock-bounds ,beg . ,end))))
+
+
 
 (defun fontlock2-fontify-region (start end keywords)
   "heck"
@@ -193,3 +196,43 @@ This function is the default `font-lock-fontify-region-function'."
           (font-lock-fontify-region-function . terminfo-fontify-region))))
 
 (add-to-list 'auto-mode-alist '("\\.term\\'" . terminfo-mode))
+
+(defun fl2-fontify-region (start end syntax)
+  (setq start (previous-char-property-change start))
+  (setq state (or (get-text-property start 'state) 0))
+  (remove-text-properties start (point-max) '(state nil 'face nil))
+  (goto-char start)
+  ;; iterate over characters
+  (while (< (point) end)
+    (setq pos (point))
+    (setq rules (nth (car state) syntax))
+    (catch 'found
+      ;; iterate over rules
+      (while (setq rule (pop rules))
+        (when (looking-at (car rules))
+          ;; found
+          (add-text-properties
+           (match-start 0) (match-end 0)
+           (list 'state (car state) 'face (caddr rules)))
+          (goto-char (match-end 0))
+          (setcar state (cadr rules))
+          (throw 'found)))
+      ;; not found (syntax error)
+      (add-text-properties
+           (point) (point)
+           (list 'state -1 'face 'error))
+      ;;(goto-char (1+ (point)))
+      )
+    ;; prevent 0 length matches from hanging
+    (unless (> (point) pos)
+      (goto-char (1+ (point))))
+    )
+  ;;(remove-text-properties (point) (point-max) '(state nil))
+  )
+
+
+;; 1: move start backwards to the next face change
+;; 2: set parser initial state to this face
+;; 3: parse until end of region
+;; 4: if parser exit state does not match the face at the end of the region[where?], then invalidate the data after the region, after a timeout
+
