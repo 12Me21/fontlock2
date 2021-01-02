@@ -183,6 +183,7 @@
         `((nil)
           nil nil nil nil
           (font-lock-fontify-region-function . fl2-fontify-region)
+          (font-lock-extra-managed-props . ,(list 'fl2-state))
           (fl2-syntax . ,terminfo-syntax))))
 
 (add-to-list 'auto-mode-alist '("\\.term\\'" . terminfo-mode))
