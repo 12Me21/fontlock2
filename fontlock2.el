@@ -43,10 +43,15 @@ This function is the default `font-lock-fontify-region-function'."
               (add-text-properties
                (match-beginning 1) (match-end 1)
                (list 'face (or face 'default))))
+          (if (setq face (cadddr (cdr rule)))
+              (add-text-properties
+               (match-beginning 2) (match-end 2)
+               (list 'face (or face 'default))))
           (goto-char (match-end 0))
           (setq state (cadr rule))
           (throw 'found nil)))
       ;; not found (syntax error)
+      ; todo: this adds a new text properties marker to each individual CHAR oh god
       (add-text-properties
            pos (1+ pos)
            (list 'fl2-state -1 'face 'font-lock-warning-face))
@@ -68,7 +73,22 @@ This function is the default `font-lock-fontify-region-function'."
 ;; 3: parse until end of region
 ;; 4: if parser exit state does not match the face at the end of the region[where?], then invalidate the data after the region, after a timeout
 
-;;(defun fl2-next-error ()
+(defun fl2-next-error ()
+  (interactive)
+  (goto-char (1+ (point)))
+  (gnus-text-property-search 'fl2-state -1 t t nil))
+
+(defun fl2-next-token ()
+  (interactive)
+  (goto-char (next-single-char-property-change (1+ (point)) 'fl2-state)))
+
+(defun fl-delete-token ()
+  (interactive)
+  (kill-region
+   (point)
+   (previous-single-char-property-change (point) 'face)))
+
+                                        ;(goto-char (text-property-any (1+ (point)) (point-max) 'fl2-state -1)))
 ;; todo: write function that scans for next error token
 ;; maybe you can give out debug info too?
 ;; like, we have regexes for what to expect?
