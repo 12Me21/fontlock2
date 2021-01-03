@@ -10,23 +10,28 @@
 If LOUDLY is non-nil, print status messages while fontifying.
 This function is the default `font-lock-fontify-region-function'."
   (save-buffer-state
-    (fl2-fontify beg end fl2-syntax))
-    `(jit-lock-bounds ,beg . ,end));)
+    (setq ret (fl2-fontify beg end fl2-syntax))
+    (message "requested: %s %s \nhighlight: %s %s\n" beg end (car ret) (cadr ret))
+    `(jit-lock-bounds ,beg . ,(cadr ret))))
 
 (defun fl2-fontify (start end syntax)
   ;(message "run %s - %s" start end)
   (setq case-fold-search nil)
   ;; todo: if we hit this limit, we should try to minimize the chance of failure
   ;; by searching for a linebreak (maybe make this configureable?)
-  (setq start (previous-single-char-property-change start 'fl2-state nil (max (point-min) (- start 100000))))
+  (setq start (previous-single-char-property-change start 'fl2-state nil (max (point-min) (- start 100))))
   
   (setq state (or (get-text-property start 'fl2-state) 0))
+  (message "initial state: %s\n" state)
   (remove-text-properties start end '('fl2-state nil 'face nil))
   (goto-char start)
+  (setq emptymatches 0)
   ;; iterate over characters
   (while (< (point) end)
     (setq pos (point))
-    (setq rules (nth state syntax))
+    (if (< state 0) ;error state
+        (setq state 0))
+    (setq rules (aref syntax state))
     (setq last-state state)
     (catch 'found
       ;; iterate over rules
@@ -60,12 +65,16 @@ This function is the default `font-lock-fontify-region-function'."
       ;;(goto-char (1+ (point)))
       )
     ;; prevent 0 length matches from hanging
-    ;; we also see if the state has changed, because that might matter too
-    ;; however it is still possible to get in a loop if 2 states have 0 length matches which lead into each other, so be careful! I should fix this
-    (unless (or (> (point) pos) (/= state last-state))
-      (goto-char (1+ pos)))
+    (if (> (point) pos)
+        (setq emptymatches 0)
+      (setq emptymatches (1+ emptymatches))
+      (when (> emptymatches 10) ;if too many empty matches in a row, exit
+        (warn "Encountered too many empty matches in a row at %s\n Exiting to prevent an infinite loop!\n" pos)
+        (goto-char end)
+        ))
     )
   ;;(remove-text-properties (point) (point-max) '(state nil))
+  (list start (point))
   )
 
 ;; 1: move start backwards to the next face change
@@ -77,6 +86,11 @@ This function is the default `font-lock-fontify-region-function'."
   (interactive)
   (goto-char (1+ (point)))
   (gnus-text-property-search 'fl2-state -1 t t nil))
+
+(defun fl2-next-warning ()
+  (interactive)
+  (goto-char (1+ (point)))
+  (gnus-text-property-search 'face 'font-lock-warning-face t t nil))
 
 (defun fl2-next-token ()
   (interactive)

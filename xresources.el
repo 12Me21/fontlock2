@@ -8,17 +8,23 @@
  xresources-translation-modifiers
  '("Shift""Lock""Ctrl""Mod1""Mod2""Mod3""Mod4""Mod5""Meta""m""h""su""a""Hyper""Super""Alt""Button1""Button2""Button3""Button4""Button5""c""s""l"))
 
+(defun xresources-check-modifier (name)
+  (if (member name xresources-translation-modifiers)
+      'font-lock-builtin-face
+    'font-lock-builtin-face)) ;'font-lock-warning-face))
+
 
 ;;NOTE: does not support C comments inside ! comments currently
 (setq
  xresources-syntax
- `(
+ `[
    ;; todo: we currently don't handle /* */ comments too well
    ;; the c preprocessor replaces them with a space, so anywhere a space is valid, a comment should be allowed as well. good luck!
 
    ( ;state 0 (start of line)
     ("^\\(!\\)\\(?:\\\\\n\\|[^\n\0]\\)*" 0 font-lock-comment-face font-lock-comment-delimiter-face) ;comment
     ("^#[\t ]*include[\t ]*.*[\t ]*" 0 font-lock-preprocessor-face) ;include
+    ("\n" 0) ;eh
     ("^[\t ]*$" 0) ;blank lines
     ("^[\t ]*[.*]*" 3) ;variable
     )
@@ -71,8 +77,9 @@
     )
 
    ( ;state 10 (trans. start of line)
+    ("/\\*[^z-a]*?\\*/" 10 font-lock-comment-face)
     ("\\\\\n" 10) ; escaped newline
-    ("[\t ]*" 10)
+    ("[\t ]*" 15)
     ("[!:]" 10 font-lock-builtin-face)
     ("" 15)
     )
@@ -99,18 +106,17 @@
     )
 
    ( ;state 15 (modifier zone)
+    ;; todo: there's also a quoted string form, which appears to be like "keysym": actions. see ParseQuotedStringEvent
     ("~?@?\\(\\$\\|\\^\\|[A-Za-z0-9][A-Za-z0-9$_-]*\\)[\t ]*" 15 xresources-check-modifier)
-    ("<")
-    
-    (,(concat
-       ;; problem here: smth like AltAlt will match
-       "[\t ]*!?[\t ]*\\(?:~?\\(?:@[A-Za-z0-9$_-]+\\|" (regexp-opt xresources-translation-modifiers) "\\|[\\$^]\\)[\t ]*\\)*"
-       "<" (regexp-opt xresources-translation-events) ">\\([^\n:]*\\):")
-     11 font-lock-builtin-face font-lock-variable-name-face) ;key seq
-    ("\\(/\\*\\)\\(?:a\\|[^a]\\)*?\\(\\*/\\)" 10 font-lock-comment-face font-lock-comment-delimiter-face font-lock-comment-delimiter-face) ;/* c comment */
-    ("/" 10 font-lock-variable-name-face)
+    ;; todo: parse the section after > properly
+    ;; it uses a different parser depending on the event type
+    (,(concat "<" (regexp-opt xresources-translation-events) ">\\(?:([0-9]+\\+?)\\)?[^:]*") 16 font-lock-builtin-face)
     )
- ))
+   ( ;state 16 (after key sequence)
+    ("[ \t]*:" 11)
+    ("[ \t]*,[ \t]*" 10) ;comma: another key! ?
+    )
+   ])
 
     ;; notes: w/o parens, " is allowed anywhere except the first char
     ;; remember that \" is also ", but \\" is \"

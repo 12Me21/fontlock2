@@ -103,9 +103,9 @@
 
 (defvar
  terminfo-syntax
- '(
+ '[
    ( ;state 0
-    ("^#.*" 0 font-lock-comment-face)
+    ("^#" 13 font-lock-comment-delimiter-face)
     ("^[a-zA-Z0-9+._-]+" 8 font-lock-type-face)
     ("use\\b" 6 font-lock-variable-name-face)
     ("[ \n	]+" 0)
@@ -120,8 +120,10 @@
     ("^#.*" 0 font-lock-comment-face)
     ;; todo: highlight escapes
     ("\\\\\\(?:[0-9][0-9][0-9]\\|.\\)" 2 font-lock-constant-face)
+    ("\\^." 2 font-lock-constant-face)
     ("%" 11 font-lock-regexp-grouping-backslash)
-    ("\\$" 12 font-lock-regexp-grouping-backslash)
+    ("\\$<" 12 font-lock-function-name-face)
+    ("\\$" 2 font-lock-string-face)
     ("\\(?:[^,$\n\\\\%]\\)*" 5 font-lock-string-face) ;DANGER! can be length 0! make sure state 5 cannot match len 0 as well
     )
    ( ;state 3
@@ -135,9 +137,11 @@
    ( ;state 5
     ("," 0)
     ("\n[	 ]+" 2)
+    ("\\^." 2 font-lock-constant-face)
     ("\\\\\\(?:[0-9][0-9][0-9]\\|.\\)" 2 font-lock-constant-face)
     ("%" 11 font-lock-regexp-grouping-backslash)
-    ("\\$" 12 font-lock-regexp-grouping-backslash)
+    ("\\$<" 12 font-lock-function-name-face)
+    ("\\$" 2 font-lock-string-face)
     )
    ( ;state 6
     ("=" 7)
@@ -156,12 +160,22 @@
     
     )
    ( ;state 11
-    ("\\(?:[-%csl+*/m&|^=><AO!~i?te;]\\|:?[-+#]?[0-9]*\\(?:\\.[0-9]+\\)?[doxXs]\\|p[1-9]\\|[Pg][a-zA-Z]\\|'\\\\?.'\\|{[0-9]+}\\|\\[\\(?:[^]]\\|\\\\.\\)*\\]\\)" 2 font-lock-function-name-face)
+    ;; %u is an extension which prints the value as utf-8
+    ;; source: terminfo.src
+    ("\\(?:[-%cusl+*/m&|^=><AO!~i?te;]\\|:?[-+#]?[0-9]*\\(?:\\.[0-9]+\\)?[doxXs]\\|p[1-9]\\|[Pg][a-zA-Z]\\|'.*'\\|{[0-9]+}\\|\\[\\(?:[^]]\\|\\\\.\\)*\\]\\)" 2 font-lock-function-name-face)
+    ("" 2) ;invalid % is treated as literal %. see adm22 terminfo entry
     )
    ( ;state 12
-    ("<[0-9]+[*/]*>" 2 font-lock-function-name-face)
+    ;; so idk exactly which places whitespace can appear but apparently This Is One Of Them!
+    ("\\(?:\n[ \t]+\\)?[0-9.]+[*/]*\\(>\\)" 2 font-lock-function-name-face)
     )
-   ))
+   ( ;state 13 (comments)
+     ;; it may seem silly to do this, but it is necessary due to the fact that
+    ;; it sets the `state'
+    ;; this is extremely important and I need to think about this more
+    (".*" 0 font-lock-comment-face)
+    )
+   ])
 ;; we are still having issues with multiline
 ;; see:
 ;; linux-m1b|Linux Minitel 1B "like" Monochrome (Gris/Blanc/Noir+Dim),
