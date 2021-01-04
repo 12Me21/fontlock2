@@ -176,29 +176,10 @@
     (".*" 0 font-lock-comment-face)
     )
    ])
-;; we are still having issues with multiline
-;; see:
-;; linux-m1b|Linux Minitel 1B "like" Monochrome (Gris/Blanc/Noir+Dim),
-;; 	ccc@,
-;; 	colors@, ncv@, pairs@,
-;; 	acsc@, bold=\E[33m, enacs@, initc@,
-;; 	is2=\E]R\E]P1A9A9A9\E]P2A9A9A9\E]P3FFFFFF\E]P4A9A9A9\E]P5A9A
-;; 	    9A9\E]P6A9A9A9\E]P9FFFFFF\E]PAFFFFFF\E]PBFFFFFF\E]PCFFFF
-;; 	    FF\E]PDFFFFFF\E]PEFFFFFF\E[?2c,
-;; 	oc@, op@, rmacs@, setab=^A, setaf=^A, smacs@, .setab@, .setaf@,
-;; 	.smcup=\E]R\E]P1A9A9A9\E]P2A9A9A9\E]P3FFFFFF\E]P4A9A9A9\E]P5
-;; 	       A9A9A9\E]P6A9A9A9\E]P9FFFFFF\E]PAFFFFFF\E]PBFFFFFF\E]
-;; 	       PCFFFFFF\E]PDFFFFFF\E]PEFFFFFF\E[?2c,
-;; 	use=linux-m1,
 
 (define-derived-mode terminfo-mode fundamental-mode "terminfo"
   "mode for highlighting terminfo files"
-  (setq font-lock-defaults
-        `((nil)
-          nil nil nil nil
-          (font-lock-fontify-region-function . fl2-fontify-region)
-          (font-lock-extra-managed-props . ,(list 'fl2-state))
-          (fl2-syntax . ,terminfo-syntax))))
+  (setq font-lock-defaults (fl2-font-lock-defaults terminfo-syntax)))
 
 (add-to-list 'auto-mode-alist '("\\.term\\'" . terminfo-mode))
 
