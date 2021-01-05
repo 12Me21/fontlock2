@@ -85,31 +85,30 @@
 
 (defun terminfo-checkvar (name)
   (if (member name terminfo-booleans)
-      'font-lock-variable-name-face
+      '(1 font-lock-variable-name-face)
     (if (member name terminfo-numeric)
-        'font-lock-variable-name-face
+        '(1 font-lock-variable-name-face)
       (if (member name terminfo-string)
-          'font-lock-variable-name-face
+          '(1 font-lock-variable-name-face)
         (if (string-equal name "use")
-            'font-lock-variable-name-face
+            '(1 font-lock-variable-name-face)
           (if (member name terminfo-user-string)
-              'font-lock-variable-name-face
+              '(1 font-lock-variable-name-face)
             (if (member name terminfo-user-numeric)
-                'font-lock-variable-name-face
+                '(1 font-lock-variable-name-face)
               (if (member name terminfo-user-booleans)
-                  'font-lock-variable-name-face
-                ;(message "unknown: %s\n" name)
-                'warning))))))))
+                  '(1 font-lock-variable-name-face)
+                '(1 warning)))))))))
 
-(defvar
+(setq
  terminfo-syntax
- '[
+ `[
    ( ;state 0
     ("^#" 13 font-lock-comment-delimiter-face)
     ("^[a-zA-Z0-9+._-]+" 8 font-lock-type-face)
     ("use\\b" 6 font-lock-variable-name-face)
     ("[ \n	]+" 0)
-    ("[a-zA-Z0-9]+" 1 terminfo-checkvar)
+    ("[a-zA-Z0-9]+" . terminfo-checkvar)
     ("\\.[a-zA-Z0-9]+" 1 font-lock-comment-face)
     ;("\\.\\(?:[^\n,]\\|\n[ 	]+\\|\\\\\\\\\\|\\\\,\\)*" 5 font-lock-comment-face) ;this should be more complex but it's probably fine except we should check for \, and similar
     )

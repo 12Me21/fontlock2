@@ -132,12 +132,7 @@
 
 (define-derived-mode xresources-mode fundamental-mode "xresources"
   "mode for x resources files"
-  (setq font-lock-defaults
-        `((nil)
-          nil nil nil nil
-          (font-lock-fontify-region-function . fl2-fontify-region)
-          (font-lock-extra-managed-props . ,(list 'fl2-state)) ;;;sorrry
-          (fl2-syntax . ,xresources-syntax))))
+  (setq font-lock-defaults (fl2-font-lock-defaults xresources-syntax)))
 
 (add-to-list 'auto-mode-alist '("\\.ad\\'" . xresources-mode))
 (add-to-list 'auto-mode-alist '(".Xresources\\'" . xresources-mode))
