@@ -137,3 +137,4 @@
 (add-to-list 'auto-mode-alist '("\\.ad\\'" . xresources-mode))
 (add-to-list 'auto-mode-alist '(".Xresources\\'" . xresources-mode))
 
+(provide 'xresources)

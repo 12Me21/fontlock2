@@ -182,3 +182,4 @@
 
 (add-to-list 'auto-mode-alist '("\\.term\\'" . terminfo-mode))
 
+(provide 'terminfo)
