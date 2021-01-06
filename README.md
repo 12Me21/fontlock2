@@ -1,5 +1,7 @@
+temporary name lol
+
 um so idk how loading files works really, but  
-basically just execute fontlock2.el and then whatever other ones, I guess
+basically just execute fl2.el and then whatever other ones, I guess
 
 ### xresources mode:  
 ![screenshot of syntax highlighting](https://smilebasicsource.com/api/File/raw/4502)
