@@ -10,8 +10,8 @@
 
 (defun xresources-check-modifier (name)
   (if (member name xresources-translation-modifiers)
-      'font-lock-builtin-face
-    'font-lock-builtin-face)) ;'font-lock-warning-face))
+      '(15 font-lock-builtin-face)
+    '(15 font-lock-builtin-face))) ;'font-lock-warning-face))
 
 
 ;;NOTE: does not support C comments inside ! comments currently
@@ -107,7 +107,7 @@
 
    ( ;state 15 (modifier zone)
     ;; todo: there's also a quoted string form, which appears to be like "keysym": actions. see ParseQuotedStringEvent
-    ("~?@?\\(\\$\\|\\^\\|[A-Za-z0-9][A-Za-z0-9$_-]*\\)[\t ]*" 15 xresources-check-modifier)
+    ("~?@?\\(\\$\\|\\^\\|[A-Za-z0-9][A-Za-z0-9$_-]*\\)[\t ]*" . xresources-check-modifier)
     ;; todo: parse the section after > properly
     ;; it uses a different parser depending on the event type
     (,(concat "<" (regexp-opt xresources-translation-events) ">\\(?:([0-9]+\\+?)\\)?[^:]*") 16 font-lock-builtin-face)
